@@ -1,0 +1,50 @@
+---
+- hosts: all
+  tasks:
+    - name: install latest packages
+      become: yes
+      apt:
+        name: "*"
+        state: latest
+        force_apt_get: true
+        update_cache: yes
+
+    - name: Install a list of packages
+      become: yes
+      apt:
+        name:
+          - texlive-latex-extra
+          - texlive-fonts-extra
+          - texlive-lang-german
+          - pandoc
+        autoclean: yes
+        autoremove: yes
+
+    - name: Clone dotfiles
+      git:
+        repo: https://github.com/groldo/dotfiles.git
+        dest: "{{ ansible_user_dir }}/.git_repos/dotfiles"
+
+    - name: bootstrap dotfile
+      shell: >
+        {{ ansible_user_dir }}/.git_repos/dotfiles/bootstrap.sh
+
+    - name: Install a list of packages
+      become: yes
+      become_user: root
+      become_method: sudo
+      apt:
+        name:
+          - gdb
+          - vim
+          - tmux
+        autoclean: yes
+        autoremove: yes
+
+    - name: Clone gef repo
+      git:
+        repo: https://github.com/hugsy/gef.git
+        dest: $HOME/.git_repos/gef
+
+  roles:
+    - docker-role
