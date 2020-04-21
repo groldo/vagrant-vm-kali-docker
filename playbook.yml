@@ -1,5 +1,19 @@
 ---
 - hosts: all
+  vars:
+    repos: [
+      "https://github.com/hugsy/gef.git",
+      "https://github.com/groldo/dotfiles.git"
+    ]
+    packages: [
+      "texlive-latex-extra",
+      "texlive-fonts-extra",
+      "texlive-lang-german",
+      "pandoc",
+      "gdb",
+      "vim",
+      "tmux"
+    ]
   tasks:
     - name: install latest packages
       become: yes
@@ -12,39 +26,21 @@
     - name: Install a list of packages
       become: yes
       apt:
-        name:
-          - texlive-latex-extra
-          - texlive-fonts-extra
-          - texlive-lang-german
-          - pandoc
+        name: "{{ item }}"
         autoclean: yes
         autoremove: yes
+      loop: "{{ packages }}"
+      when: packages|length > 0
 
-    - name: Clone dotfiles
+    - name: Prepare some git repos
       git:
-        repo: https://github.com/groldo/dotfiles.git
-        dest: "{{ ansible_user_dir }}/.git_repos/dotfiles"
-
-    - name: bootstrap dotfile
-      shell: >
-        {{ ansible_user_dir }}/.git_repos/dotfiles/bootstrap.sh
-
-    - name: Install a list of packages
-      become: yes
-      become_user: root
-      become_method: sudo
-      apt:
-        name:
-          - gdb
-          - vim
-          - tmux
-        autoclean: yes
-        autoremove: yes
-
-    - name: Clone gef repo
-      git:
-        repo: https://github.com/hugsy/gef.git
-        dest: $HOME/.git_repos/gef
+        repo: "{{ item }}"
+        dest: "{{ ansible_user_dir }}/.git_repos/"
+      loop: "{{ repos }}"
+      when: repos|length > 0
 
   roles:
-    - docker-role
+    - role: docker-role
+      vars: 
+        docker_users: ["vagrant"]
+
